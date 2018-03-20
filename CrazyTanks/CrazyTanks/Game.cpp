@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "Game.h"
 
-//checks if there are enemy tanks near;
-bool isNear(const std::list<Enemy>& enemies, int xPos, int yPos)
+//checks if there are enemy tanks near
+bool Game::isNear(int xPos, int yPos)
 {
 	for (std::list<Enemy>::const_iterator iter = enemies.begin(); iter != enemies.end(); iter++)
 	{
@@ -101,7 +101,7 @@ void Game::addEnemy()
 	{
 		tankPositionX = rand() % this->map.getMapSizeX();
 		tankPositionY = rand() % this->map.getMapSizeY();
-	} while (isNear(enemies, tankPositionX, tankPositionY) || map.getMap(tankPositionX, tankPositionY) != ' ');
+	} while (isNear(tankPositionX, tankPositionY) || map.getMap(tankPositionX, tankPositionY) != ' ');
 	newEnemy.changePosition(tankPositionX, tankPositionY);
 	this->enemies.push_back(newEnemy);
 	map.changeMap('N', tankPositionX, tankPositionY);
@@ -127,56 +127,14 @@ void Game::movePlayerBullet()
 		{
 			if (double(clock() - iter->getFlyT()) / CLOCKS_PER_SEC > 0.01)
 			{
-				iter->changeFlyT(clock());
-				if (map.getMap(iter->getPositionX(), iter->getPositionY()) != 'P')
-				{
-					map.changeMap(' ', iter->getPositionX(), iter->getPositionY());
-				}
-				iter->move();
-				char newPosition = map.getMap(iter->getPositionX(), iter->getPositionY());
-				if (newPosition == ' ')
-				{
-					map.changeMap('|', iter->getPositionX(), iter->getPositionY());
-					iter++;
-				}
-				else if (newPosition == 'N')
-				{
-					map.changeMap(' ', iter->getPositionX(), iter->getPositionY());
-					destroyEnemy(iter->getPositionX(), iter->getPositionY());
-					playerBullets.erase(iter++);
-				}
-				else
-				{
-					playerBullets.erase(iter++);
-				}
+				movePlayerBullet(iter,'|');
 			}
 		}
 		else
 		{
 			if (double(clock() - iter->getFlyT()) / CLOCKS_PER_SEC > 0.005)
 			{
-				iter->changeFlyT(clock());
-				if (map.getMap(iter->getPositionX(), iter->getPositionY()) != 'P')
-				{
-					map.changeMap(' ', iter->getPositionX(), iter->getPositionY());
-				}
-				iter->move();
-				char newPosition = map.getMap(iter->getPositionX(), iter->getPositionY());
-				if (newPosition == ' ')
-				{
-					map.changeMap('-', iter->getPositionX(), iter->getPositionY());
-					iter++;
-				}
-				else if (newPosition == 'N')
-				{
-					map.changeMap(' ', iter->getPositionX(), iter->getPositionY());
-					destroyEnemy(iter->getPositionX(), iter->getPositionY());
-					playerBullets.erase(iter++);
-				}
-				else
-				{
-					playerBullets.erase(iter++);
-				}
+				movePlayerBullet(iter,'-');
 			}
 		}
 	}
@@ -201,58 +159,14 @@ void Game::moveEnemyBullet()
 		{
 			if (double(clock() - iter->getFlyT()) / CLOCKS_PER_SEC > 0.04)
 			{
-				iter->changeFlyT(clock());
-				char position = map.getMap(iter->getPositionX(), iter->getPositionY());
-				if ((position != 'P') && position != 'N')
-				{
-					map.changeMap(' ', iter->getPositionX(), iter->getPositionY());
-				}
-				iter->move();
-				position = map.getMap(iter->getPositionX(), iter->getPositionY());
-				if (position == ' ')
-				{
-					map.changeMap('|', iter->getPositionX(), iter->getPositionY());
-					iter++;
-				}
-				else if (position == 'P')
-				{
-					player.changeHP(-1);
-					player.changeUntouchable(true);
-					enemyBullets.erase(iter++);
-				}
-				else
-				{
-					enemyBullets.erase(iter++);
-				}
+				moveEnemyBullet(iter,'|');
 			}
 		}
 		else
 		{
 			if (double(clock() - iter->getFlyT()) / CLOCKS_PER_SEC > 0.02)
 			{
-				iter->changeFlyT(clock());
-				char position = map.getMap(iter->getPositionX(), iter->getPositionY());
-				if ((position != 'P') && position != 'N')
-				{
-					map.changeMap(' ', iter->getPositionX(), iter->getPositionY());
-				}
-				iter->move();
-				position = map.getMap(iter->getPositionX(), iter->getPositionY());
-				if (position == ' ')
-				{
-					map.changeMap('-', iter->getPositionX(), iter->getPositionY());
-					iter++;
-				}
-				else if (position == 'P')
-				{
-					player.changeHP(-1);
-					player.changeUntouchable(true);
-					enemyBullets.erase(iter++);
-				}
-				else
-				{
-					enemyBullets.erase(iter++);
-				}
+				moveEnemyBullet(iter, '-');
 			}
 		}
 	}
@@ -283,79 +197,263 @@ void Game::moveEnemy(Enemy& enemy,int xMove,int yMove,double dt)
 	}
 }
 
+void Game::movePlayerBullet(std::list<Bullet>::iterator & iter,char symbol)
+{
+	iter->changeFlyT(clock());
+	if (map.getMap(iter->getPositionX(), iter->getPositionY()) != 'P')
+	{
+		map.changeMap(' ', iter->getPositionX(), iter->getPositionY());
+	}
+	iter->move();
+	char newPosition = map.getMap(iter->getPositionX(), iter->getPositionY());
+	if (newPosition == ' ')
+	{
+		map.changeMap(symbol, iter->getPositionX(), iter->getPositionY());
+		iter++;
+	}
+	else if (newPosition == 'N')
+	{
+		map.changeMap(' ', iter->getPositionX(), iter->getPositionY());
+		destroyEnemy(iter->getPositionX(), iter->getPositionY());
+		playerBullets.erase(iter++);
+	}
+	else if (newPosition == '#')
+	{
+		changeWallHP(-1, iter->getPositionX(), iter->getPositionY());
+		playerBullets.erase(iter++);
+	}
+	else
+	{
+		playerBullets.erase(iter++);
+	}
+}
+
+void Game::moveEnemyBullet(std::list<Bullet>::iterator & iter, char symbol)
+{
+	iter->changeFlyT(clock());
+	char position = map.getMap(iter->getPositionX(), iter->getPositionY());
+	if ((position != 'P') && position != 'N')
+	{
+		map.changeMap(' ', iter->getPositionX(), iter->getPositionY());
+	}
+	iter->move();
+	position = map.getMap(iter->getPositionX(), iter->getPositionY());
+	if (position == ' ')
+	{
+		map.changeMap(symbol, iter->getPositionX(), iter->getPositionY());
+		iter++;
+	}
+	else if (position == '#')
+	{
+		changeWallHP(-1, iter->getPositionX(), iter->getPositionY());
+		enemyBullets.erase(iter++);
+	}
+	else if (position == 'P')
+	{
+		player.changeHP(-1);
+		player.changeUntouchable(true);
+		enemyBullets.erase(iter++);
+	}
+	else if (position == 'G')
+	{
+		player.changeHP(-3);
+		player.changeUntouchable(true);
+		enemyBullets.erase(iter++);
+	}
+	else
+	{
+		enemyBullets.erase(iter++);
+	}
+}
+
 void Game::moveEnemy()
 {
 	std::list<Enemy>::iterator iter = enemies.begin();
 	while (iter != enemies.end())
 	{
-		// horizontal movement
-		if (std::abs(iter->getPositionX() - player.getPositionX()) >= std::abs(iter->getPositionY() - player.getPositionY()))
+		if ((std::abs(iter->getPositionX() - player.getPositionX()) < std::abs(iter->getPositionX() - 1))
+		|| (std::abs(iter->getPositionY() - player.getPositionY()) < std::abs(iter->getPositionY() - map.getMapSizeY() + 2)))
 		{
-			if (iter->getPositionX() > player.getPositionX()) // moving  left
+			// objective is to kill player
+			iter->changeObjective(0);
+			// horizontal movement
+			if (std::abs(iter->getPositionX() - player.getPositionX()) >= std::abs(iter->getPositionY() - player.getPositionY()))
 			{
-				char nextPos = map.getMap(iter->getPositionX() - 1, iter->getPositionY());
-				if (nextPos == ' ' || nextPos == 'P') // can move
+				if (iter->getPositionX() > player.getPositionX()) // moving  left
 				{
-					if (nextPos == 'P')
+					char nextPos = map.getMap(iter->getPositionX() - 1, iter->getPositionY());
+					if (nextPos == ' ' || nextPos == 'P') // can move
 					{
-						moveEnemy(*iter++, -1, 0, 0.4);
-						break; // kinda solves problem with next node being lost after destruction of the tank 
+						if (nextPos == 'P')
+						{
+							moveEnemy(*iter++, -1, 0, 0.4);
+							break; // kinda solves problem with next node being lost after destruction of the tank 
+						}
+						moveEnemy(*iter, -1, 0, 0.4);
+						iter->changeDirection(2);
 					}
-					moveEnemy(*iter, -1, 0, 0.4);
-					iter->changeDirection(2);
+					else //cant move
+					{
+						if (map.getMap(iter->getPositionX(), iter->getPositionY() - 1) == ' ')
+						{
+							moveEnemy(*iter, 0, -1, 0.4);
+							iter->changeDirection(1);
+						}
+						else
+						{
+							moveEnemy(*iter, 0, 1, 0.4);
+							iter->changeDirection(3);
+						}
+					}
 				}
-				else //cant move
+				// moving right
+				else if (iter->getPositionX() < player.getPositionX())
 				{
-					if (map.getMap(iter->getPositionX(), iter->getPositionY() - 1) == ' ')
+					char nextPos = map.getMap(iter->getPositionX() + 1, iter->getPositionY());
+					//can move
+					if (nextPos == ' ' || nextPos == 'P')
 					{
-						moveEnemy(*iter, 0, -1, 0.4);
-						iter->changeDirection(1);
+						if (nextPos == 'P')
+						{
+							moveEnemy(*iter++, 1, 0, 0.4);
+							break;
+						}
+						moveEnemy(*iter, +1, 0, 0.4);
+						iter->changeDirection(4);
 					}
-					else 
+					//cant move
+					else
 					{
-						moveEnemy(*iter, 0, 1, 0.4);
-						iter->changeDirection(3);
+						if (map.getMap(iter->getPositionX(), iter->getPositionY() - 1) == ' ')
+						{
+							moveEnemy(*iter, 0, -1, 0.4);
+							iter->changeDirection(1);
+						}
+						else
+						{
+							moveEnemy(*iter, 0, 1, 0.4);
+							iter->changeDirection(3);
+						}
 					}
 				}
 			}
-			// moving right
-			else if (iter->getPositionX() < player.getPositionX())
+			else // vertical movement
 			{
-				char nextPos = map.getMap(iter->getPositionX() + 1, iter->getPositionY());
-				//can move
-				if (nextPos == ' ' || nextPos == 'P')
+				if (iter->getPositionY() > player.getPositionY()) //moving up
 				{
-					if (nextPos == 'P')
+					char nextPos = map.getMap(iter->getPositionX(), iter->getPositionY() - 1);
+					if (nextPos == ' ' || nextPos == 'P') //can move
 					{
-						moveEnemy(*iter++, 1, 0, 0.4);
-						break;
-					}
-					moveEnemy(*iter, +1, 0, 0.4);
-					iter->changeDirection(4);
-				}
-				//cant move
-				else
-				{
-					if (map.getMap(iter->getPositionX(), iter->getPositionY() -1 ) == ' ')
-					{
+						if (nextPos == 'P')
+						{
+							moveEnemy(*iter++, 0, -1, 0.4);
+							break;
+						}
 						moveEnemy(*iter, 0, -1, 0.4);
 						iter->changeDirection(1);
 					}
-					else 
+					else //cant
 					{
-						moveEnemy(*iter, 0, 1, 0.4);
+						if (map.getMap(iter->getPositionX() - 1, iter->getPositionY()) == ' ')
+						{
+							moveEnemy(*iter, -1, 0, 0.4);
+							iter->changeDirection(2);
+						}
+						else
+						{
+							moveEnemy(*iter, 1, 0, 0.4);
+							iter->changeDirection(4);
+						}
+					}
+				}
+				else if (iter->getPositionY() < player.getPositionY()) //moving down
+				{
+					char nextPos = map.getMap(iter->getPositionX(), iter->getPositionY() + 1);
+					if (nextPos == ' ' || nextPos == 'P') //can move
+					{
+						if (nextPos == 'P')
+						{
+							moveEnemy(*iter++, 0, +1, 0.4);
+							break;
+						}
+						moveEnemy(*iter, 0, +1, 0.4);
 						iter->changeDirection(3);
+					}
+					else // cant
+					{
+						if (map.getMap(iter->getPositionX() - 1, iter->getPositionY()) == ' ')
+						{
+							moveEnemy(*iter, -1, 0, 0.4);
+							iter->changeDirection(2);
+						}
+						else
+						{
+							moveEnemy(*iter, 1, 0, 0.4);
+							iter->changeDirection(4);
+						}
 					}
 				}
 			}
 		}
-		else // vertical movement
+		else
 		{
-			if (iter->getPositionY() > player.getPositionY()) //moving up
+			// objective is to destroy Gold
+			iter->changeObjective(1);
+			if (std::abs(iter->getPositionX() - 1 ) < std::abs(iter->getPositionY() - map.getMapSizeY() - 1))
 			{
-				char nextPos = map.getMap(iter->getPositionX(), iter->getPositionY() - 1);
-				if (nextPos == ' ' || nextPos == 'P') //can move
+				if (iter->getPositionX() > 1)
 				{
+					char nextPos = map.getMap(iter->getPositionX() - 1, iter->getPositionY());
+					if (nextPos == 'P')
+					{
+						moveEnemy(*iter++, -1, 0, 0.4);
+						break;
+					}
+					moveEnemy(*iter, -1, 0, 0.4);
+					iter->changeDirection(2);
+				}
+				else if (iter->getPositionX() < 1) // this obscure "if" is used for the case that in future position of gold could change
+				{
+					char nextPos = map.getMap(iter->getPositionX() + 1, iter->getPositionY());
+					if (nextPos == 'P')
+					{
+						moveEnemy(*iter++, +1, 0, 0.4);
+						break;
+					}
+					moveEnemy(*iter, 1, 0, 0.4);
+					iter->changeDirection(4);
+				}
+				else
+				{
+					if (iter->getPositionY() > map.getMapSizeY() - 2)
+					{
+						char nextPos = map.getMap(iter->getPositionX(), iter->getPositionY() - 1);
+						if (nextPos == 'P')
+						{
+							moveEnemy(*iter++, 0, -1, 0.4);
+							break;
+						}
+						moveEnemy(*iter, 0, -1, 0.4);
+						iter->changeDirection(1);
+					}
+					else
+					{
+						char nextPos = map.getMap(iter->getPositionX(), iter->getPositionY() + 1);
+						if (nextPos == 'P')
+						{
+							moveEnemy(*iter++, 0, +1, 0.4);
+							break;
+						}
+						moveEnemy(*iter, 0, 1, 0.4);
+						iter->changeDirection(3);
+					}
+				}
+			}
+			else
+			{
+				if (iter->getPositionY() > map.getMapSizeY() - 2)
+				{
+					char nextPos = map.getMap(iter->getPositionX(), iter->getPositionY() - 1);
 					if (nextPos == 'P')
 					{
 						moveEnemy(*iter++, 0, -1, 0.4);
@@ -363,43 +461,39 @@ void Game::moveEnemy()
 					}
 					moveEnemy(*iter, 0, -1, 0.4);
 					iter->changeDirection(1);
-				}	
-				else //cant
-				{
-					if (map.getMap(iter->getPositionX() - 1, iter->getPositionY()) == ' ')
-					{
-						moveEnemy(*iter, -1, 0, 0.4);
-						iter->changeDirection(2);
-					}
-					else 				
-					{
-						moveEnemy(*iter, 1, 0, 0.4);
-						iter->changeDirection(4);
-					}
 				}
-			}
-			else if (iter->getPositionY() < player.getPositionY()) //moving down
-			{
-				char nextPos = map.getMap(iter->getPositionX(), iter->getPositionY() + 1);
-				if (nextPos == ' ' || nextPos == 'P') //can move
+				else if (iter->getPositionY() < map.getMapSizeY() - 2)
 				{
+					char nextPos = map.getMap(iter->getPositionX(), iter->getPositionY() + 1);
 					if (nextPos == 'P')
 					{
 						moveEnemy(*iter++, 0, +1, 0.4);
 						break;
 					}
-					moveEnemy(*iter, 0, +1, 0.4);
+					moveEnemy(*iter, 0, 1, 0.4);
 					iter->changeDirection(3);
 				}
-				else // cant
+				else
 				{
-					if (map.getMap(iter->getPositionX()-1, iter->getPositionY()) == ' ')
+					if (iter->getPositionX() > 1)
 					{
+						char nextPos = map.getMap(iter->getPositionX() - 1, iter->getPositionY());
+						if (nextPos == 'P')
+						{
+							moveEnemy(*iter++, -1, 0, 0.4);
+							break;
+						}
 						moveEnemy(*iter, -1, 0, 0.4);
 						iter->changeDirection(2);
 					}
-					else
+					else if (iter->getPositionX() < 1)
 					{
+						char nextPos = map.getMap(iter->getPositionX() + 1, iter->getPositionY());
+						if (nextPos == 'P')
+						{
+							moveEnemy(*iter++, +1, 0, 0.4);
+							break;
+						}
 						moveEnemy(*iter, 1, 0, 0.4);
 						iter->changeDirection(4);
 					}
@@ -408,6 +502,7 @@ void Game::moveEnemy()
 		}
 		++iter;
 	}
+
 }
 
 void Game::enemyShot()
@@ -420,6 +515,16 @@ void Game::enemyShot()
 			addEnemyBullet(*iter);
 		}
 		++iter;
+	}
+}
+
+void Game::changeWallHP(int hp, int xPos, int yPos)
+{
+	map.changeWallHP(hp, xPos, yPos);
+	if (map.getWallHp(xPos, yPos) <= 0)
+	{
+		map.destroyWall(xPos,yPos);
+		map.changeMap(' ', xPos, yPos);
 	}
 }
 
@@ -444,8 +549,10 @@ void Game::mainMenu()
 
 bool Game::cShot(const Enemy & enemy)
 {
-	switch (enemy.getDirection())
+	if (enemy.getObjective() == 0)
 	{
+		switch (enemy.getDirection())
+		{
 		case 1:
 			if (player.getPositionY() < enemy.getPositionY())
 			{
@@ -477,6 +584,11 @@ bool Game::cShot(const Enemy & enemy)
 		default:
 			return true;
 			break;
+		}
+	}
+	else
+	{
+		return true;
 	}
 }
 

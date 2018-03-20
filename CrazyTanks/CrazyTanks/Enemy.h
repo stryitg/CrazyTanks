@@ -17,6 +17,7 @@ public:
 	inline const int& getDirection() const { return Tank::getDirection(); };
 	inline clock_t getMoveT() const { return Tank::getMoveT(); };
 	inline clock_t getShotT() const { return Tank::getShotT(); };
+	inline const int& getObjective() const { return this->objective; };
 
 
 	//Modifiers
@@ -25,6 +26,7 @@ public:
 	inline void changeDirection(int direction) { Tank::changeDirection(direction); };
 	inline void changeMoveT(clock_t time) { Tank::changeMoveT(time); };
 	inline void changeShotT(clock_t time) { Tank::changeShotT(time); };
+	inline void changeObjective(int objective) { this->objective = objective; };
 
 
 	//Overloading
@@ -34,6 +36,7 @@ private:
 	int yPos;
 
 	int direction;
+	int objective;
 
 	clock_t tMove; // handles move speed;
 	clock_t tShot; // handles time to reload

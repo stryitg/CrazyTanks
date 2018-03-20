@@ -27,42 +27,45 @@ Map::Map()
 					case 0:
 						if (j == mapSizeX - 2)
 						{
-							map[i][j] = '#';
-							map[i][j - 1] = '#';
-							map[i][j - 2] = '#';
+							addWall(j, i);
+							addWall(j-1, i);
+							addWall(j-2, i);
 						}
 						if (j == 1)
 						{
-							map[i][j] = '#';
-							map[i][j + 1] = '#';
-							map[i][j + 2] = '#';
+							addWall(j, i);
+							addWall(j + 1, i);
+							addWall(j + 2, i);
+
 						}
-						if (j != 1 && i != mapSizeX - 2)
+						if (j != 1 && j != mapSizeX - 2)
 						{
-							map[i][j-1] = '#';
-							map[i][j] = '#';
-							map[i][j + 1] = '#';
+							addWall(j - 1, i);
+							addWall(j, i);
+							addWall(j + 1, i);
 						}
 						break;
 					case 1:
 						if (i == mapSizeY - 2)
 						{
-							map[i][j] = '#';
-							map[i-1][j] = '#';
-							map[i-2][j] = '#';
+							addWall(j, i);
+							addWall(j, i - 1);
+							addWall(j, i - 2);
 						}
 						if (i == 1)
 						{
-							map[i][j] = '#';
-							map[i+1][j] = '#';
-							map[i+2][j] = '#';
+							addWall(j, i);
+							addWall(j, i + 1);
+							addWall(j, i + 2);
+
 						}
 						if (i != 1 && i != mapSizeY - 2)
 						{
-							map[i-1][j] = '#';
-							map[i][j] = '#';
-							map[i+1][j] = '#';
+							addWall(j, i - 1);
+							addWall(j, i);
+							addWall(j, i + 1);
 						}
+						
 						break;
 					default:
 						break;
@@ -70,8 +73,25 @@ Map::Map()
 			}
 		}
 	}
+	// adding gold and fortress
+	map[mapSizeY - 2][1] = 'G';
+	addWall(1, mapSizeY - 3);
+	addWall(2, mapSizeY - 3);
+	addWall(2, mapSizeY - 2);
 }
 
+
+void Map::addWall(int xPos, int yPos)
+{
+	map[yPos][xPos] = '#';
+	walls[std::pair<int, int>(xPos,yPos)] = Wall(xPos, yPos);
+}
+
+void Map::destroyWall(int xPos, int yPos)
+{
+	map[yPos][xPos] = ' ';
+	walls.erase(std::pair<int, int>(xPos, yPos));
+}
 
 void Map::displayMap() const
 {

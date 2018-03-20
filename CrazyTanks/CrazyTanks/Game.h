@@ -40,9 +40,9 @@ public:
 	void movePlayerBullet();
 	void addEnemyBullet(Enemy& enemy);
 	void moveEnemyBullet();
-	void moveEnemy(Enemy& enemy,int xMove,int yMove,double dt);
 	void moveEnemy(); // moves all enemy
 	void enemyShot();
+	void changeWallHP(int hp, int xPos, int yPos);
 
 	//Functions
 
@@ -64,9 +64,16 @@ private:
 
 	int score;
 
+	// Modifiers
+
+	void moveEnemy(Enemy& enemy, int xMove, int yMove, double dt);
+	void movePlayerBullet(std::list<Bullet>::iterator& iter, char symbol); // moves bullet with represented by symbol
+	void moveEnemyBullet(std::list<Bullet>::iterator& iter, char symbol);
+
 	// Functions
 
 	bool cShot(const Enemy& enemy);	// checks if enemy should shoot 
+	bool isNear(int xPos, int yPos); //checks if there are enemy tanks near
 	
 };
 
